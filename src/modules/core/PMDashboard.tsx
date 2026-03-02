@@ -3,6 +3,24 @@ import { supabase } from '../../lib/supabase';
 import { SmartBooking } from '../jobs/SmartBooking';
 import { DisputePortal } from '../disputes/DisputePortal';
 import { RetractModal } from '../disputes/RetractModal';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+
+// ─── Stripe setup ─────────────────────────────────────────────────────────────
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? '');
+
+const cardElementOptions = {
+  style: {
+    base: {
+      fontSize: '15px',
+      fontFamily: 'sans-serif',
+      color: '#1A1A1A',
+      '::placeholder': { color: '#9CA3AF' },
+    },
+    invalid: { color: '#DC2626' },
+  },
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -469,12 +487,24 @@ function ServicesPage({ jobs, userId, onRefresh, onDispute, onRetract, onReviewQ
   });
 
   const getActiveDispute = (job: any) => job.disputes?.find((d: any) => !d.resolution);
+
   const verifyWork = async (job: any) => {
     if (!window.confirm('Verify this work as satisfactorily completed?\n\nThis will seal the record in the Vault. You can still raise a dispute afterwards if needed.')) return;
     const { error } = await supabase.from('jobs').update({ status: 'VERIFIED', verified_at: new Date().toISOString() }).eq('id', job.id);
     if (error) return alert('Failed: ' + error.message);
     const { data: vd } = await supabase.from('vendors').select('owner_id').eq('id', job.vendor_id).single();
     if (vd?.owner_id) await supabase.from('notifications').insert({ user_id: vd.owner_id, title: 'Work Verified', body: `Your work on "${job.description.slice(0, 60)}" has been verified and added to the Vault.`, link: '/vendor' });
+    // Release payment to vendor if payment was captured
+    if (job.stripe_payment_intent_id && !job.stripe_transfer_id) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        await fetch('https://guuctgeqzwbfgwmrgfez.supabase.co/functions/v1/release-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+          body: JSON.stringify({ jobId: job.id }),
+        });
+      } catch (e) { console.error('Payment release failed:', e); }
+    }
     onRefresh();
   };
 
@@ -966,6 +996,76 @@ const BOTTOM_NAV: { key: PageKey; label: string; icon: React.ReactNode; comingSo
   { key: 'SETTINGS', label: 'Settings', icon: <IconSettings /> },
 ];
 
+// ─── PaymentForm (Stripe Elements sub-component) ──────────────────────────────
+
+function PaymentForm({ job, onSuccess, onDecline }: {
+  job: any;
+  onSuccess: (paymentIntentId: string) => void;
+  onDecline: () => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [paying, setPaying] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
+
+  const handlePay = async () => {
+    if (!stripe || !elements) return;
+    setPaying(true);
+    setCardError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('https://guuctgeqzwbfgwmrgfez.supabase.co/functions/v1/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ jobId: job.id, amount: Math.round(job.quote_amount * 100) }),
+      });
+      const { clientSecret, error: fnError } = await res.json();
+      if (fnError) throw new Error(fnError);
+
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) throw new Error('Card element not found');
+
+      const { paymentIntent, error: stripeError } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card: cardElement },
+      });
+      if (stripeError) throw new Error(stripeError.message);
+      if (paymentIntent?.status === 'succeeded') {
+        onSuccess(paymentIntent.id);
+      }
+    } catch (err: any) {
+      setCardError(err.message || 'Payment failed. Please try again.');
+    } finally {
+      setPaying(false);
+    }
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: '16px' }}>
+        <label style={labelStyle}>CARD DETAILS</label>
+        <div style={{ border: '1px solid #E5E3DF', borderRadius: '6px', padding: '12px 14px', background: '#FFFFFF' }}>
+          <CardElement options={cardElementOptions} />
+        </div>
+        {cardError && <div style={{ marginTop: '8px', color: '#DC2626', fontSize: '0.8rem' }}>{cardError}</div>}
+      </div>
+      <p style={{ fontSize: '0.75rem', color: '#9CA3AF', marginBottom: '16px', lineHeight: 1.4 }}>
+        Payment is held in escrow and released to the vendor upon work verification. A 5% platform fee applies.
+      </p>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <button onClick={onDecline} disabled={paying} style={{ ...btnSecondary, flex: 1, color: '#DC2626', borderColor: '#FEE2E2' }}>Decline Quote</button>
+        <button onClick={handlePay} disabled={paying || !stripe} style={{ ...btnPrimary, flex: 1, opacity: paying || !stripe ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          {paying ? (
+            <>
+              <span style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#FFFFFF', borderRadius: '50%', display: 'inline-block', animation: '__lt_spin 0.6s linear infinite' }} />
+              Processing…
+            </>
+          ) : `Pay $${job.quote_amount} & Authorise`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main PMDashboard ─────────────────────────────────────────────────────────
 
 export function PMDashboard() {
@@ -999,7 +1099,12 @@ export function PMDashboard() {
 
   useEffect(() => {
     const id = 'lt-notif-slide';
-    if (!document.getElementById(id)) { const s = document.createElement('style'); s.id = id; s.textContent = '@keyframes __lt_slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }'; document.head.appendChild(s); }
+    if (!document.getElementById(id)) {
+      const s = document.createElement('style');
+      s.id = id;
+      s.textContent = '@keyframes __lt_slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } } @keyframes __lt_spin { to { transform: rotate(360deg); } }';
+      document.head.appendChild(s);
+    }
   }, []);
 
   useEffect(() => {
@@ -1025,7 +1130,7 @@ export function PMDashboard() {
   async function loadSystemData(uid: string) {
     try {
       const [{ data: jobData }, { data: locData }, { data: lsData }, { data: connData }, { data: notifData }] = await Promise.all([
-        supabase.from('jobs').select('*, locations(label, address), vendors(id, company_name, full_name), disputes(id, category, severity, resolution)'),
+        supabase.from('jobs').select('*, locations(label, address), vendors(id, company_name, full_name, stripe_account_id), disputes(id, category, severity, resolution), stripe_payment_intent_id, stripe_transfer_id'),
         supabase.from('locations').select('*'),
         supabase.from('location_services').select('*, vendors(id, company_name, full_name, service_type, contact_email), locations(label)'),
         supabase.from('pm_vendor_connections').select('*, vendors(id, company_name, full_name, service_type, contact_email)').eq('pm_id', uid),
@@ -1054,8 +1159,10 @@ export function PMDashboard() {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
-  const acceptQuote = async (job: any) => {
-    const { error } = await supabase.from('jobs').update({ status: 'IN_PROGRESS' }).eq('id', job.id);
+  const acceptQuote = async (job: any, paymentIntentId?: string) => {
+    const updateData: any = { status: 'IN_PROGRESS' };
+    if (paymentIntentId) updateData.stripe_payment_intent_id = paymentIntentId;
+    const { error } = await supabase.from('jobs').update(updateData).eq('id', job.id);
     if (error) return alert('Failed: ' + error.message);
     const { data: vd } = await supabase.from('vendors').select('owner_id').eq('id', job.vendor_id).single();
     if (vd?.owner_id) await supabase.from('notifications').insert({ user_id: vd.owner_id, title: 'Quote Accepted — Work Approved', body: `Your quote for "${job.description.slice(0, 60)}" has been accepted. You can now begin work.`, link: '/vendor' });
@@ -1260,10 +1367,25 @@ export function PMDashboard() {
               {reviewingQuoteJob.scope_requested && <div style={{ marginTop: '8px', fontSize: '0.78rem', color: '#7C3AED' }}>📋 Based on scope visit</div>}
             </div>
             <p style={{ fontSize: '0.82rem', color: '#6B7280', marginBottom: '20px', lineHeight: 1.5 }}>Accepting this quote authorises the vendor to proceed with the work.{' '}{reviewingQuoteJob?.decline_reason ? "This is the vendor's revised quote. Declining again will permanently delete this job." : 'Declining will give the vendor one chance to submit a revised quote.'}</p>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => declineQuote(reviewingQuoteJob)} style={{ ...btnSecondary, flex: 1, color: '#DC2626', borderColor: '#FEE2E2' }}>Decline Quote</button>
-              <button onClick={() => acceptQuote(reviewingQuoteJob)} style={{ ...btnPrimary, flex: 1 }}>Accept & Authorise</button>
-            </div>
+            {reviewingQuoteJob.vendors?.stripe_account_id ? (
+              <Elements stripe={stripePromise}>
+                <PaymentForm
+                  job={reviewingQuoteJob}
+                  onSuccess={(paymentIntentId) => acceptQuote(reviewingQuoteJob, paymentIntentId)}
+                  onDecline={() => declineQuote(reviewingQuoteJob)}
+                />
+              </Elements>
+            ) : (
+              <>
+                <div style={{ marginBottom: '16px', padding: '10px 14px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '6px', fontSize: '0.78rem', color: '#D97706' }}>
+                  ⚠ This vendor hasn't connected a bank account yet. Accepting will authorise work without payment capture.
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={() => declineQuote(reviewingQuoteJob)} style={{ ...btnSecondary, flex: 1, color: '#DC2626', borderColor: '#FEE2E2' }}>Decline Quote</button>
+                  <button onClick={() => acceptQuote(reviewingQuoteJob)} style={{ ...btnPrimary, flex: 1 }}>Accept & Authorise</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -1306,3 +1428,5 @@ const btnSecondary: React.CSSProperties = { background: 'transparent', color: '#
 const inputStyle: React.CSSProperties = { display: 'block', width: '100%', padding: '11px 14px', marginBottom: '16px', background: '#FFFFFF', border: '1px solid #E5E3DF', color: '#1A1A1A', borderRadius: '6px', fontSize: '0.9rem', boxSizing: 'border-box' };
 const labelStyle: React.CSSProperties = { display: 'block', fontSize: '0.7rem', color: '#9CA3AF', letterSpacing: '1px', marginBottom: '7px' };
 const emptyState: React.CSSProperties = { border: '1px dashed #E5E3DF', borderRadius: '8px', padding: '40px', textAlign: 'center', color: '#9CA3AF', fontSize: '0.85rem' };
+
+export default PMDashboard;
