@@ -47,34 +47,44 @@ export function SignUpPage() {
       return;
     }
 
-    // Route to correct dashboard
-    if (role === 'pm') navigate('/onboarding/pm');
-    else navigate('/onboarding/vendor');
+    // Preserve invite token if present — complete onboarding first, then consume invite
+    const params = new URLSearchParams(window.location.search);
+    const inviteToken = params.get('invite');
+
+    if (inviteToken) {
+      // Route through onboarding with invite token preserved in URL
+      navigate(role === 'pm'
+        ? `/onboarding/pm?invite=${inviteToken}`
+        : `/onboarding/vendor?invite=${inviteToken}`
+      );
+    } else {
+      navigate(role === 'pm' ? '/onboarding/pm' : '/onboarding/vendor');
+    }
   };
 
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
         <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ margin: 0, letterSpacing: '3px', fontSize: '1.4rem' }}>ANCHORPOINT</h1>
-          <p style={{ margin: '6px 0 0 0', color: '#555', fontSize: '0.8rem', letterSpacing: '1px' }}>
+          <h1 style={{ margin: 0, letterSpacing: '3px', fontSize: '1.4rem', color: '#1A1A1A' }}>ANCHORPOINT</h1>
+          <p style={{ margin: '6px 0 0 0', color: '#6B7280', fontSize: '0.8rem', letterSpacing: '1px' }}>
             OPERATIONS PLATFORM
           </p>
         </div>
 
-        <h2 style={{ margin: '0 0 24px 0', fontSize: '1rem', color: '#aaa', fontWeight: 'normal' }}>
+        <h2 style={{ margin: '0 0 24px 0', fontSize: '1rem', color: '#6B7280', fontWeight: 'normal' }}>
           Create your account
         </h2>
 
         {error && (
-          <div style={{ background: '#1a0000', border: '1px solid #ff4444', color: '#ff8888', padding: '12px', borderRadius: '4px', marginBottom: '16px', fontSize: '0.85rem' }}>
+          <div style={{ background: '#FEF2F2', border: '1px solid #DC2626', color: '#DC2626', padding: '12px', borderRadius: '4px', marginBottom: '16px', fontSize: '0.85rem' }}>
             {error}
           </div>
         )}
 
         {/* Role Selection */}
         <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '0.75rem', color: '#666', marginBottom: '10px', letterSpacing: '1px' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', color: '#9CA3AF', marginBottom: '10px', letterSpacing: '1px' }}>
             ACCOUNT TYPE
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -82,9 +92,9 @@ export function SignUpPage() {
               onClick={() => setRole('pm')}
               style={{
                 padding: '14px 10px', borderRadius: '8px', cursor: 'pointer',
-                background: role === 'pm' ? '#001a00' : '#000',
-                border: role === 'pm' ? '2px solid lime' : '1px solid #333',
-                color: role === 'pm' ? 'lime' : '#666',
+                background: role === 'pm' ? '#EFF6FF' : '#F9FAFB',
+                border: role === 'pm' ? '2px solid #2563EB' : '1px solid #E5E3DF',
+                color: role === 'pm' ? '#2563EB' : '#6B7280',
                 fontSize: '0.85rem', fontWeight: 'bold', transition: 'all 0.15s'
               }}
             >
@@ -95,9 +105,9 @@ export function SignUpPage() {
               onClick={() => setRole('vendor')}
               style={{
                 padding: '14px 10px', borderRadius: '8px', cursor: 'pointer',
-                background: role === 'vendor' ? '#001a00' : '#000',
-                border: role === 'vendor' ? '2px solid lime' : '1px solid #333',
-                color: role === 'vendor' ? 'lime' : '#666',
+                background: role === 'vendor' ? '#EFF6FF' : '#F9FAFB',
+                border: role === 'vendor' ? '2px solid #2563EB' : '1px solid #E5E3DF',
+                color: role === 'vendor' ? '#2563EB' : '#6B7280',
                 fontSize: '0.85rem', fontWeight: 'bold', transition: 'all 0.15s'
               }}
             >
@@ -130,17 +140,13 @@ export function SignUpPage() {
           style={inputStyle}
         />
 
-        <button
-          onClick={handleSignUp}
-          disabled={loading}
-          style={btnPrimary}
-        >
+        <button onClick={handleSignUp} disabled={loading} style={btnPrimary}>
           {loading ? 'Creating account...' : 'Create Account'}
         </button>
 
-        <p style={{ textAlign: 'center', marginTop: '20px', color: '#555', fontSize: '0.85rem' }}>
+        <p style={{ textAlign: 'center', marginTop: '20px', color: '#6B7280', fontSize: '0.85rem' }}>
           Already have an account?{' '}
-          <Link to="/login" style={{ color: 'lime', textDecoration: 'none' }}>Sign in</Link>
+          <Link to="/login" style={{ color: '#2563EB', textDecoration: 'none' }}>Sign in</Link>
         </p>
       </div>
     </div>
@@ -148,28 +154,29 @@ export function SignUpPage() {
 }
 
 const pageStyle: React.CSSProperties = {
-  minHeight: '100vh', backgroundColor: '#050505',
+  minHeight: '100vh', backgroundColor: '#FAF9F7',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   padding: '20px'
 };
 
 const cardStyle: React.CSSProperties = {
-  background: '#0a0a0a', border: '1px solid #222',
+  background: '#FFFFFF', border: '1px solid #E5E3DF',
   borderRadius: '12px', padding: '40px',
-  width: '100%', maxWidth: '400px'
+  width: '100%', maxWidth: '400px',
+  boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
 };
 
 const inputStyle: React.CSSProperties = {
   display: 'block', width: '100%', padding: '12px 14px',
-  marginBottom: '14px', background: '#000',
-  border: '1px solid #333', color: 'white',
+  marginBottom: '14px', background: '#FFFFFF',
+  border: '1px solid #E5E3DF', color: '#1A1A1A',
   borderRadius: '6px', fontSize: '0.95rem',
   boxSizing: 'border-box', outline: 'none'
 };
 
 const btnPrimary: React.CSSProperties = {
   display: 'block', width: '100%', padding: '13px',
-  background: 'lime', color: 'black',
+  background: '#2563EB', color: '#FFFFFF',
   border: 'none', borderRadius: '6px',
   cursor: 'pointer', fontWeight: 'bold',
   fontSize: '0.95rem', letterSpacing: '0.5px',

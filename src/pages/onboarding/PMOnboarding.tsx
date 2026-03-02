@@ -87,8 +87,8 @@ export function PMOnboarding() {
       <div style={cardStyle}>
 
         <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ margin: 0, letterSpacing: '3px', fontSize: '1.2rem' }}>ANCHORPOINT</h1>
-          <p style={{ margin: '4px 0 0 0', color: '#555', fontSize: '0.75rem', letterSpacing: '1px' }}>
+          <h1 style={{ margin: 0, letterSpacing: '3px', fontSize: '1.2rem', color: '#1A1A1A' }}>ANCHORPOINT</h1>
+          <p style={{ margin: '4px 0 0 0', color: '#6B7280', fontSize: '0.75rem', letterSpacing: '1px' }}>
             PM ONBOARDING
           </p>
         </div>
@@ -99,16 +99,16 @@ export function PMOnboarding() {
             {STEPS.map((label, i) => (
               <span key={label} style={{
                 fontSize: '0.7rem', letterSpacing: '0.5px',
-                color: i <= step ? 'lime' : '#444',
+                color: i <= step ? '#2563EB' : '#9CA3AF',
                 fontWeight: i === step ? 'bold' : 'normal'
               }}>
                 {label}
               </span>
             ))}
           </div>
-          <div style={{ height: '3px', background: '#222', borderRadius: '2px' }}>
+          <div style={{ height: '3px', background: '#E5E3DF', borderRadius: '2px' }}>
             <div style={{
-              height: '100%', borderRadius: '2px', background: 'lime',
+              height: '100%', borderRadius: '2px', background: '#2563EB',
               width: `${progress}%`, transition: 'width 0.3s ease'
             }} />
           </div>
@@ -132,9 +132,9 @@ export function PMOnboarding() {
                   onClick={() => update('account_type', opt.value)}
                   style={{
                     padding: '14px 10px', borderRadius: '8px', cursor: 'pointer',
-                    background: form.account_type === opt.value ? '#001a00' : '#000',
-                    border: form.account_type === opt.value ? '2px solid lime' : '1px solid #333',
-                    color: form.account_type === opt.value ? 'lime' : '#666',
+                    background: form.account_type === opt.value ? '#EFF6FF' : '#F9FAFB',
+                    border: form.account_type === opt.value ? '2px solid #2563EB' : '1px solid #E5E3DF',
+                    color: form.account_type === opt.value ? '#2563EB' : '#6B7280',
                     fontSize: '0.85rem', fontWeight: 'bold'
                   }}
                 >
@@ -166,7 +166,7 @@ export function PMOnboarding() {
         {step === 1 && (
           <div>
             <h2 style={stepTitle}>Your primary address</h2>
-            <p style={{ color: '#555', fontSize: '0.85rem', marginBottom: '24px' }}>
+            <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '24px' }}>
               This is your main business address. You can add more locations in your dashboard.
             </p>
             <label style={labelStyle}>STREET ADDRESS</label>
@@ -183,10 +183,10 @@ export function PMOnboarding() {
         {step === 2 && (
           <div>
             <h2 style={stepTitle}>You're all set</h2>
-            <p style={{ color: '#555', fontSize: '0.85rem', marginBottom: '24px' }}>
+            <p style={{ color: '#6B7280', fontSize: '0.85rem', marginBottom: '24px' }}>
               Here's a summary of what you entered:
             </p>
-            <div style={{ background: '#000', border: '1px solid #222', borderRadius: '8px', padding: '20px', marginBottom: '16px' }}>
+            <div style={{ background: '#F9FAFB', border: '1px solid #E5E3DF', borderRadius: '8px', padding: '20px', marginBottom: '16px' }}>
               {[
                 { label: 'NAME', value: form.full_name },
                 { label: 'COMPANY', value: form.company_name },
@@ -194,12 +194,12 @@ export function PMOnboarding() {
                 { label: 'ACCOUNT TYPE', value: form.account_type === 'smb' ? 'Single Business' : 'Multiple Locations' },
               ].map(row => (
                 <div key={row.label} style={{ marginBottom: '14px' }}>
-                  <div style={{ fontSize: '0.65rem', color: '#555', letterSpacing: '1px' }}>{row.label}</div>
-                  <div style={{ color: 'white', fontSize: '0.95rem', marginTop: '2px' }}>{row.value}</div>
+                  <div style={{ fontSize: '0.65rem', color: '#9CA3AF', letterSpacing: '1px' }}>{row.label}</div>
+                  <div style={{ color: '#1A1A1A', fontSize: '0.95rem', marginTop: '2px' }}>{row.value}</div>
                 </div>
               ))}
             </div>
-            <p style={{ color: '#444', fontSize: '0.8rem' }}>
+            <p style={{ color: '#9CA3AF', fontSize: '0.8rem' }}>
               You can edit all of this later in Settings.
             </p>
           </div>
@@ -228,11 +228,11 @@ export function PMOnboarding() {
   );
 }
 
-const pageStyle: React.CSSProperties = { minHeight: '100vh', backgroundColor: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' };
-const cardStyle: React.CSSProperties = { background: '#0a0a0a', border: '1px solid #222', borderRadius: '12px', padding: '40px', width: '100%', maxWidth: '480px' };
-const stepTitle: React.CSSProperties = { margin: '0 0 24px 0', fontSize: '1.1rem', color: 'white', fontWeight: 'bold' };
-const labelStyle: React.CSSProperties = { display: 'block', fontSize: '0.7rem', color: '#555', letterSpacing: '1px', marginBottom: '8px' };
-const inputStyle: React.CSSProperties = { display: 'block', width: '100%', padding: '12px 14px', marginBottom: '20px', background: '#000', border: '1px solid #333', color: 'white', borderRadius: '6px', fontSize: '0.95rem', boxSizing: 'border-box' };
-const btnPrimary: React.CSSProperties = { padding: '13px', background: 'lime', color: 'black', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' };
-const btnSecondary: React.CSSProperties = { padding: '13px 20px', background: 'transparent', color: '#666', border: '1px solid #333', borderRadius: '6px', cursor: 'pointer', fontSize: '0.95rem' };
-const errorStyle: React.CSSProperties = { background: '#1a0000', border: '1px solid #ff4444', color: '#ff8888', padding: '12px', borderRadius: '4px', marginBottom: '16px', fontSize: '0.85rem' };
+const pageStyle: React.CSSProperties = { minHeight: '100vh', backgroundColor: '#FAF9F7', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' };
+const cardStyle: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #E5E3DF', borderRadius: '12px', padding: '40px', width: '100%', maxWidth: '480px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' };
+const stepTitle: React.CSSProperties = { margin: '0 0 24px 0', fontSize: '1.1rem', color: '#1A1A1A', fontWeight: 'bold' };
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: '0.7rem', color: '#9CA3AF', letterSpacing: '1px', marginBottom: '8px' };
+const inputStyle: React.CSSProperties = { display: 'block', width: '100%', padding: '12px 14px', marginBottom: '20px', background: '#FFFFFF', border: '1px solid #E5E3DF', color: '#1A1A1A', borderRadius: '6px', fontSize: '0.95rem', boxSizing: 'border-box' };
+const btnPrimary: React.CSSProperties = { padding: '13px', background: '#2563EB', color: '#FFFFFF', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' };
+const btnSecondary: React.CSSProperties = { padding: '13px 20px', background: 'transparent', color: '#6B7280', border: '1px solid #E5E3DF', borderRadius: '6px', cursor: 'pointer', fontSize: '0.95rem' };
+const errorStyle: React.CSSProperties = { background: '#FEF2F2', border: '1px solid #DC2626', color: '#DC2626', padding: '12px', borderRadius: '4px', marginBottom: '16px', fontSize: '0.85rem' };

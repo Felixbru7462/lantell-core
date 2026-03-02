@@ -46,18 +46,18 @@ export function LoginPage() {
     <div style={pageStyle}>
       <div style={cardStyle}>
         <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ margin: 0, letterSpacing: '3px', fontSize: '1.4rem' }}>ANCHORPOINT</h1>
-          <p style={{ margin: '6px 0 0 0', color: '#555', fontSize: '0.8rem', letterSpacing: '1px' }}>
+          <h1 style={{ margin: 0, letterSpacing: '3px', fontSize: '1.4rem', color: '#1A1A1A' }}>LANTELL</h1>
+          <p style={{ margin: '6px 0 0 0', color: '#6B7280', fontSize: '0.8rem', letterSpacing: '1px' }}>
             OPERATIONS PLATFORM
           </p>
         </div>
 
-        <h2 style={{ margin: '0 0 24px 0', fontSize: '1rem', color: '#aaa', fontWeight: 'normal' }}>
+        <h2 style={{ margin: '0 0 24px 0', fontSize: '1rem', color: '#6B7280', fontWeight: 'normal' }}>
           Sign in to your account
         </h2>
 
         {error && (
-          <div style={{ background: '#1a0000', border: '1px solid #ff4444', color: '#ff8888', padding: '12px', borderRadius: '4px', marginBottom: '16px', fontSize: '0.85rem' }}>
+          <div style={{ background: '#FEF2F2', border: '1px solid #DC2626', color: '#DC2626', padding: '12px', borderRadius: '4px', marginBottom: '16px', fontSize: '0.85rem' }}>
             {error}
           </div>
         )}
@@ -69,16 +69,16 @@ export function LoginPage() {
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
 
-        <p style={{ textAlign: 'center', marginTop: '20px', color: '#555', fontSize: '0.85rem' }}>
+        <p style={{ textAlign: 'center', marginTop: '20px', color: '#6B7280', fontSize: '0.85rem' }}>
           Don't have an account?{' '}
-          <Link to="/signup" style={{ color: 'lime', textDecoration: 'none' }}>Sign up</Link>
+          <Link to="/signup" style={{ color: '#2563EB', textDecoration: 'none' }}>Sign up</Link>
         </p>
       </div>
     </div>
   );
 }
 
-const pageStyle: React.CSSProperties = { minHeight: '100vh', backgroundColor: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' };
-const cardStyle: React.CSSProperties = { background: '#0a0a0a', border: '1px solid #222', borderRadius: '12px', padding: '40px', width: '100%', maxWidth: '400px' };
-const inputStyle: React.CSSProperties = { display: 'block', width: '100%', padding: '12px 14px', marginBottom: '14px', background: '#000', border: '1px solid #333', color: 'white', borderRadius: '6px', fontSize: '0.95rem', boxSizing: 'border-box' };
-const btnPrimary: React.CSSProperties = { display: 'block', width: '100%', padding: '13px', background: 'lime', color: 'black', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' };
+const pageStyle: React.CSSProperties = { minHeight: '100vh', backgroundColor: '#FAF9F7', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' };
+const cardStyle: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #E5E3DF', borderRadius: '12px', padding: '40px', width: '100%', maxWidth: '400px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' };
+const inputStyle: React.CSSProperties = { display: 'block', width: '100%', padding: '12px 14px', marginBottom: '14px', background: '#FFFFFF', border: '1px solid #E5E3DF', color: '#1A1A1A', borderRadius: '6px', fontSize: '0.95rem', boxSizing: 'border-box' };
+const btnPrimary: React.CSSProperties = { display: 'block', width: '100%', padding: '13px', background: '#2563EB', color: '#FFFFFF', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' };
