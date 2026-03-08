@@ -1017,7 +1017,11 @@ function PaymentForm({ job, onSuccess, onDecline }: {
       const res = await fetch('https://guuctgeqzwbfgwmrgfez.supabase.co/functions/v1/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
-        body: JSON.stringify({ jobId: job.id, amount: Math.round(job.quote_amount * 100) }),
+        body: JSON.stringify({ 
+  jobId: job.id, 
+  amount: job.quote_amount,
+  vendorStripeAccountId: job.vendors?.stripe_account_id 
+}),
       });
       const { clientSecret, error: fnError } = await res.json();
       if (fnError) throw new Error(fnError);
@@ -1132,7 +1136,7 @@ export function PMDashboard() {
       const [{ data: jobData }, { data: locData }, { data: lsData }, { data: connData }, { data: notifData }] = await Promise.all([
         supabase.from('jobs').select('*, locations(label, address), vendors(id, company_name, full_name, stripe_account_id), disputes(id, category, severity, resolution), stripe_payment_intent_id, stripe_transfer_id'),
         supabase.from('locations').select('*'),
-        supabase.from('location_services').select('*, vendors(id, company_name, full_name, service_type, contact_email), locations(label)'),
+        supabase.from('location_services').select(`*, vendors(id, company_name, full_name, owner_id, stripe_account_id)`),
         supabase.from('pm_vendor_connections').select('*, vendors(id, company_name, full_name, service_type, contact_email)').eq('pm_id', uid),
         supabase.from('notifications').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(50),
       ]);

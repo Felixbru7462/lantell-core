@@ -171,19 +171,19 @@ export function VendorOnboarding() {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
 
-      const response = await fetch(
-        'https://guuctgeqzwbfgwmrgfez.supabase.co/functions/v1/create-connect-account',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({ vendorId: savedVendorId, email: savedVendorEmail }),
-        }
-      );
+const response = await fetch(
+  'https://guuctgeqzwbfgwmrgfez.supabase.co/functions/v1/create-connect-account',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token}`
+    },
+    body: JSON.stringify({ vendorId: savedVendorId, email: savedVendorEmail })
+  }
+);
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
